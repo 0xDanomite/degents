@@ -10,6 +10,8 @@ export const serverEnv = {
   BASE_RPC_URL: process.env.BASE_RPC_URL!,
 } as const;
 
+console.log('Loaded serverEnv:', serverEnv);
+
 // src/lib/client/env.ts
 export const clientEnv = {
   // Client-side safe variables

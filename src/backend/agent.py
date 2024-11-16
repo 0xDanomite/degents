@@ -1,5 +1,5 @@
 # src/backend/agent.py
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
@@ -18,7 +18,7 @@ from cdp_langchain.agent_toolkits import CdpToolkit
 from cdp_langchain.utils import CdpAgentkitWrapper
 
 # Load environment variables
-load_dotenv('.env.local')
+load_dotenv('../../.env.local')
 
 app = FastAPI()
 
@@ -195,3 +195,21 @@ async def get_agent_state():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+@app.post("/api/agent/process-trend")
+async def process_trend(trend: Dict):
+    try:
+        await trend_agent.process_trend(trend)
+        return {"success": True, "message": "Trend processing started"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()  # Accept the WebSocket connection
+    try:
+        while True:
+            data = await websocket.receive_text()  # You can process data from the client if needed
+            await websocket.send_text(f"Message received: {data}")
+    except WebSocketDisconnect:
+        print("Client disconnected")

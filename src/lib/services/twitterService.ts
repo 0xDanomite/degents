@@ -24,6 +24,7 @@ export class TwitterService {
       'TWITTER_API_SECRET',
       'TWITTER_ACCESS_TOKEN',
       'TWITTER_ACCESS_SECRET',
+      'TWITTER_BEARER_TOKEN',
     ];
 
     const missing = requiredVars.filter(
@@ -41,16 +42,16 @@ export class TwitterService {
 
   async getTrends(): Promise<TwitterTrend[]> {
     try {
-      // Get readonly client for v1 API
-      const readOnlyClient = this.client.readOnly;
+      // Fetch trends for worldwide (WOEID = 1)
+      console.log('trends', this.client.v1);
+      const trends = await this.client.v1.trendsByPlace(
+        this.WORLDWIDE_WOEID
+      );
 
-      // Fetch trends for worldwide
-      const { data: trends } =
-        await readOnlyClient.v1.trendingHashtags(
-          this.WORLDWIDE_WOEID
-        );
+      // The API response contains an array with a trends property
+      const [trendData] = trends;
 
-      return trends.map((trend) => ({
+      return trendData.trends.map((trend) => ({
         name: trend.name,
         query: trend.query,
         tweet_volume: trend.tweet_volume,

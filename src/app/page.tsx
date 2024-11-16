@@ -1,111 +1,200 @@
-// src/app/page.tsx
 'use client';
 
-import { useState } from 'react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
+import { useEffect, useState } from 'react';
+import { ActivityFeed } from '@/components/agent/ActivityFeed';
+import { FundManagement } from '@/components/agent/FundManagement';
+import { AgentControls } from '@/components/agent/AgentControls';
+import { TrendList } from '@/components/trends/TrendList';
+import { TrendAnalysis } from '@/components/trends/TrendAnalysis';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Play, Pause, AlertCircle } from 'lucide-react';
 
-export default function TestDashboard() {
+interface TokenTrend {
+  symbol: string;
+  mentions: number;
+  score: number;
+  token_verified: boolean;
+  engagement: number;
+}
+
+interface Analysis {
+  symbol: string;
+  analysis: string;
+  action: string;
+  transaction?: string;
+}
+
+interface WalletInfo {
+  address: string;
+  balance: string;
+  network: string;
+}
+
+export default function TokenDashboard() {
+  // State management
+  const [tokenTrends, setTokenTrends] = useState<TokenTrend[]>([]);
+  const [walletInfo, setWalletInfo] = useState<WalletInfo | null>(
+    null
+  );
+  const [holdings, setHoldings] = useState([]);
   const [isAgentRunning, setIsAgentRunning] = useState(false);
   const [autoTrading, setAutoTrading] = useState(false);
-  const [status, setStatus] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState('');
+  const [error, setError] = useState('');
+  const [analysis, setAnalysis] = useState<Analysis | null>(null);
 
-  const handleAgentControl = async (action: 'start' | 'stop') => {
+  // Fetch functions
+  const fetchTokenTrends = async () => {
     try {
+      const response = await fetch('/api/token-trends');
+      const data = await response.json();
+      if (data.trends) {
+        setTokenTrends(data.trends);
+      } else {
+        throw new Error('Failed to fetch trends.');
+      }
+    } catch (err) {
+      setError('Error fetching trends: ' + err.message);
+    }
+  };
+
+  const fetchWalletInfo = async () => {
+    try {
+      const response = await fetch('/api/wallet');
+      const data = await response.json();
+      setWalletInfo(data);
+    } catch (err) {
+      setError('Error fetching wallet info');
+    }
+  };
+
+  const fetchHoldings = async () => {
+    try {
+      const response = await fetch('/api/holdings');
+      const data = await response.json();
+      setHoldings(data.holdings);
+    } catch (err) {
+      setError('Error fetching holdings');
+    }
+  };
+
+  const analyzeToken = async (token: TokenTrend) => {
+    try {
+      setStatus(`Analyzing ${token.symbol}...`);
+      const response = await fetch('/api/analyze-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(token),
+      });
+      const data = await response.json();
+      setAnalysis(data);
+      setStatus(`Analysis complete for ${token.symbol}`);
+    } catch (err) {
+      setError('Error analyzing token');
+    }
+  };
+
+  const toggleAutoTrading = async (checked: boolean) => {
+    try {
+      const response = await fetch('/api/agent/auto-trading', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: checked }),
+      });
+      const data = await response.json();
+      setAutoTrading(checked);
+      setStatus(`Auto Trading ${checked ? 'enabled' : 'disabled'}`);
+    } catch (err) {
+      setError('Failed to toggle auto trading');
+    }
+  };
+
+  const toggleAgent = async () => {
+    try {
+      const action = isAgentRunning ? 'stop' : 'start';
       const response = await fetch(`/api/agent/${action}`, {
         method: 'POST',
       });
       const data = await response.json();
+      setIsAgentRunning(!isAgentRunning);
       setStatus(`Agent ${action}ed successfully`);
-      setIsAgentRunning(action === 'start');
-      setError(null);
     } catch (err) {
-      setError(`Failed to ${action} agent`);
+      setError(
+        `Failed to ${isAgentRunning ? 'stop' : 'start'} agent`
+      );
     }
   };
 
-  const handleAutoTradingToggle = async () => {
-    try {
-      const newState = !autoTrading;
-      const response = await fetch('/api/agent/auto-trading', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ enabled: newState }),
-      });
-      const data = await response.json();
-      setAutoTrading(newState);
-      setStatus(`Auto-trading ${newState ? 'enabled' : 'disabled'}`);
-      setError(null);
-    } catch (err) {
-      setError('Failed to toggle auto-trading');
-    }
-  };
+  // Initial load and polling
+  useEffect(() => {
+    fetchTokenTrends();
+    fetchWalletInfo();
+    fetchHoldings();
+
+    // Set up polling for updates
+    const interval = setInterval(() => {
+      fetchTokenTrends();
+      fetchWalletInfo();
+      fetchHoldings();
+    }, 30000); // Update every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // WebSocket connection
+  useEffect(() => {
+    const ws = new WebSocket('ws://localhost:8000/ws');
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'token_update') {
+        setTokenTrends((prevTrends) => {
+          const updatedTrends = [...prevTrends];
+          const index = updatedTrends.findIndex(
+            (t) => t.symbol === data.token.symbol
+          );
+          if (index !== -1) {
+            updatedTrends[index] = data.token;
+          } else {
+            updatedTrends.push(data.token);
+          }
+          return updatedTrends;
+        });
+      }
+    };
+
+    return () => ws.close();
+  }, []);
 
   return (
     <main className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">
-        Agent Test Dashboard
+        Token Trend Dashboard
       </h1>
 
-      {/* Controls Card */}
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle>Agent Controls</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span>Agent Status</span>
-            <Button
-              onClick={() =>
-                handleAgentControl(isAgentRunning ? 'stop' : 'start')
-              }
-              variant={isAgentRunning ? 'destructive' : 'default'}
-              className="flex items-center gap-2"
-            >
-              {isAgentRunning ? (
-                <>
-                  <Pause className="h-4 w-4" /> Stop Agent
-                </>
-              ) : (
-                <>
-                  <Play className="h-4 w-4" /> Start Agent
-                </>
-              )}
-            </Button>
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <AgentControls
+          isRunning={isAgentRunning}
+          autoTrading={autoTrading}
+          onToggleAgent={toggleAgent}
+          onToggleAutoTrading={toggleAutoTrading}
+        />
+        <FundManagement />
+      </div>
 
-          <div className="flex items-center justify-between">
-            <span>Auto Trading</span>
-            <Switch
-              checked={autoTrading}
-              onCheckedChange={handleAutoTradingToggle}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 gap-4">
+        <ActivityFeed />
+        <TrendList trends={tokenTrends} onAnalyze={analyzeToken} />
+        {analysis && <TrendAnalysis analysis={analysis} />}
+      </div>
 
-      {/* Status Messages */}
+      {/* Status and Error Alerts */}
       {status && (
-        <Alert className="mb-4">
+        <Alert className="mt-4">
           <AlertDescription>{status}</AlertDescription>
         </Alert>
       )}
-
-      {/* Error Messages */}
       {error && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertCircle className="h-4 w-4" />
+        <Alert variant="destructive" className="mt-4">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}

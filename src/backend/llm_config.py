@@ -4,7 +4,7 @@ from typing import Union, Optional
 import os
 from dotenv import load_dotenv
 
-load_dotenv('.env.local')
+load_dotenv('../../.env.local')
 
 class LLMProvider:
     def __init__(self):

@@ -1,4 +1,3 @@
-// src/app/api/agent/[action]/route.ts
 import { NextResponse } from 'next/server';
 
 const BACKEND_URL =
@@ -12,7 +11,8 @@ export async function POST(
     const action = params.action;
     let body = {};
 
-    if (action === 'auto-trading') {
+    // Handle specific actions dynamically
+    if (action === 'auto-trading' || action === 'process-trend') {
       body = await request.json();
     }
 
@@ -26,6 +26,10 @@ export async function POST(
         body: JSON.stringify(body),
       }
     );
+
+    if (!response.ok) {
+      throw new Error(`Failed to ${action}.`);
+    }
 
     const data = await response.json();
     return NextResponse.json(data);

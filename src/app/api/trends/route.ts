@@ -6,19 +6,26 @@ const trendService = new TrendService();
 
 export async function GET() {
   try {
+    // Fetch trends from the TrendService
     const trends = await trendService.getTrends();
 
+    // Return the trends in the response with additional metadata
     return NextResponse.json({
       trends,
       timestamp: new Date().toISOString(),
       success: true,
     });
   } catch (error) {
+    // Log the error for debugging purposes
     console.error('API Error:', error);
 
+    // Return a more detailed error response
     return NextResponse.json(
       {
-        error: 'Failed to fetch trends',
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Failed to fetch trends',
         success: false,
         timestamp: new Date().toISOString(),
       },
