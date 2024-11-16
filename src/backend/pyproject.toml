@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "cdp-agentkit-sample"
+version = "0.1.0"
+description = "A sample app that uses CDP AgentKit"
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+langchain-core = "0.3.13"  # Updated to match langchain-openai requirement
+langgraph = "0.2.45"
+cdp-sdk = "0.10.3"
+cdp-langchain = "0.0.4"
+cdp-agentkit-core = "0.0.3"
+fastapi = "0.109.1"
+uvicorn = {extras = ["standard"], version = "0.27.0"}
+python-dotenv = "1.0.0"
+websockets = "13.0.1"
+langchain-openai = "0.2.4"  # Added back with specific version
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

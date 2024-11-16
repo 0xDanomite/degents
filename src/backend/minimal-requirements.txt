@@ -1,0 +1,9 @@
+# Core CDP requirements
+cdp-sdk==0.10.3
+cdp-agentkit-core==0.0.3
+cdp-langchain==0.0.4
+
+# Server requirements
+fastapi
+uvicorn[standard]
+python-dotenv
