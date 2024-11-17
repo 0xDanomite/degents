@@ -41,7 +41,7 @@ export const TrendList = ({ trends, onAnalyze }: TrendListProps) => {
                 <span className="font-medium">${token.symbol}</span>
                 {token.token_verified ? (
                   <Badge
-                    variant="success"
+                    variant="default"
                     className="flex items-center gap-1"
                   >
                     <CheckCircle className="h-3 w-3" />

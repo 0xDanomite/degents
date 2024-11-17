@@ -15,8 +15,26 @@ import {
   CheckCircle,
 } from 'lucide-react';
 
+export interface AgentActivity {
+  type:
+    | 'info'
+    | 'analysis'
+    | 'trade'
+    | 'warning'
+    | 'error'
+    | 'success';
+  message: string;
+  details?: Record<string, any>;
+  timestamp: string;
+}
+
+export interface WebSocketMessage {
+  type: string;
+  data: AgentActivity;
+}
+
 export const ActivityFeed = () => {
-  const [activities, setActivities] = useState([]);
+  const [activities, setActivities] = useState<AgentActivity[]>([]);
 
   useEffect(() => {
     const ws = new WebSocket('ws://localhost:8000/ws');
@@ -24,14 +42,15 @@ export const ActivityFeed = () => {
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.type === 'agent_activity') {
-        setActivities((prev) => [data.data, ...prev].slice(0, 50)); // Keep last 50 activities
+        // @ts-ignorein a
+        setActivities((prev) => [data.data, ...prev].slice(0, 50));
       }
     };
 
     return () => ws.close();
   }, []);
 
-  const getActivityIcon = (type) => {
+  const getActivityIcon = (type: string) => {
     switch (type) {
       case 'info':
         return <Info className="h-4 w-4" />;

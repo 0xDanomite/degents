@@ -42,8 +42,6 @@ export class TwitterService {
 
   async getTrends(): Promise<TwitterTrend[]> {
     try {
-      // Fetch trends for worldwide (WOEID = 1)
-      console.log('trends', this.client.v1);
       const trends = await this.client.v1.trendsByPlace(
         this.WORLDWIDE_WOEID
       );

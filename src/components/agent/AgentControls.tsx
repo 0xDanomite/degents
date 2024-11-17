@@ -8,12 +8,19 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Brain, Play, Pause } from 'lucide-react';
 
+interface AgentControlsProps {
+  isRunning: boolean;
+  autoTrading: boolean;
+  onToggleAgent: () => void;
+  onToggleAutoTrading: (enabled: boolean) => void;
+}
+
 export const AgentControls = ({
   isRunning,
   autoTrading,
   onToggleAgent,
   onToggleAutoTrading,
-}) => {
+}: AgentControlsProps) => {
   return (
     <Card>
       <CardHeader>

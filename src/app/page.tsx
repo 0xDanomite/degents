@@ -2,15 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { ActivityFeed } from '@/components/agent/ActivityFeed';
-import { FundManagement } from '@/components/agent/FundManagement';
+// import { FundManagement } from '@/components/agent/FundManagement';
 import { AgentControls } from '@/components/agent/AgentControls';
 import { TrendList } from '@/components/trends/TrendList';
 import { TrendAnalysis } from '@/components/trends/TrendAnalysis';
 import { WalletInfo } from '@/components/agent/WalletInfo';
 import { TokenHoldings } from '@/components/agent/TokenHoldings';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { MemeCombinations } from '@/components/trends/MemeCombinations';
+// import { MemeCombinations } from '@/components/trends/MemeCombinations';
 import { GeneratedTokens } from '@/components/trends/GeneratedTokens';
+import { GeneratedToken, MemeCombination } from '@/types/token';
 
 interface TokenTrend {
   symbol: string;
@@ -54,9 +55,9 @@ export default function TokenDashboard() {
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
-  const [memeCombinations, setMemeCombinations] = useState<
-    MemeCombination[]
-  >([]);
+  // const [memeCombinations, setMemeCombinations] = useState<
+  //   MemeCombination[]
+  // >([]);
   const [generatedTokens, setGeneratedTokens] = useState<
     GeneratedToken[]
   >([]);
@@ -101,17 +102,17 @@ export default function TokenDashboard() {
     }
   };
 
-  const fetchMemeCombinations = async () => {
-    try {
-      const response = await fetch('/api/meme-combinations');
-      const data = await response.json();
-      if (data.success) {
-        setMemeCombinations(data.combinations);
-      }
-    } catch (err) {
-      setError('Error fetching meme combinations');
-    }
-  };
+  // const fetchMemeCombinations = async () => {
+  //   try {
+  //     const response = await fetch('/api/meme-combinations');
+  //     const data = await response.json();
+  //     if (data.success) {
+  //       setMemeCombinations(data.combinations);
+  //     }
+  //   } catch (err) {
+  //     setError('Error fetching meme combinations');
+  //   }
+  // };
 
   const fetchGeneratedTokens = async () => {
     try {
@@ -246,7 +247,7 @@ export default function TokenDashboard() {
       {/* Second Row: Token Holdings and Fund Management */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <TokenHoldings holdings={holdings} />
-        <FundManagement />
+        {/* <FundManagement /> */}
       </div>
 
       {/* Activity Feed and Trends */}
@@ -257,7 +258,7 @@ export default function TokenDashboard() {
         /> */}
         <GeneratedTokens
           tokens={generatedTokens}
-          onCreateToken={createMemeToken}
+          onCreateToken={() => createMemeToken}
           isAutoTrading={autoTrading}
         />
         <ActivityFeed />

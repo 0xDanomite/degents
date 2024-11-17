@@ -30,3 +30,20 @@ export interface GeneratedToken {
   transaction_hash?: string;
   network: string;
 }
+
+export interface MemeCombination {
+  name: string;
+  symbol: string;
+  description: string;
+  initial_supply: number;
+  max_supply: number;
+  source_trends: {
+    symbol: string;
+    score: number;
+  }[];
+  created?: boolean;
+  transaction_hash?: string;
+  tagline: string;
+  meme_potential: string;
+  network?: string;
+}

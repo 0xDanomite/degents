@@ -26,6 +26,7 @@ interface GeneratedToken {
   }[];
   created?: boolean;
   transaction_hash?: string;
+  network?: string;
 }
 
 interface GeneratedTokensProps {
@@ -79,7 +80,7 @@ export const GeneratedTokens = ({
                   {token.created ? (
                     <div className="flex items-center gap-2">
                       <Badge
-                        variant="success"
+                        variant="default"
                         className="flex items-center gap-1"
                       >
                         <CheckCircle className="h-3 w-3" />
