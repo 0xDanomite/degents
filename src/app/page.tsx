@@ -42,7 +42,6 @@ interface TokenHolding {
 }
 
 export default function TokenDashboard() {
-  // State management
   const [tokenTrends, setTokenTrends] = useState<TokenTrend[]>([]);
   const [walletInfo, setWalletInfo] = useState<WalletInfo>({
     address: 'Loading...',
@@ -189,7 +188,6 @@ export default function TokenDashboard() {
     }
   };
 
-  // Initial load and polling
   useEffect(() => {
     const fetchData = async () => {
       await Promise.all([
@@ -205,7 +203,6 @@ export default function TokenDashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  // WebSocket connection for real-time updates
   useEffect(() => {
     const ws = new WebSocket('ws://localhost:8000/ws');
 
@@ -228,8 +225,6 @@ export default function TokenDashboard() {
       <h1 className="text-2xl font-bold mb-4">
         Degents Dashboard - AI Agents for Degens
       </h1>
-
-      {/* First Row: Wallet Info and Agent Controls */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <WalletInfo
           address={walletInfo.address}
@@ -243,14 +238,10 @@ export default function TokenDashboard() {
           onToggleAutoTrading={toggleAutoTrading}
         />
       </div>
-
-      {/* Second Row: Token Holdings and Fund Management */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <TokenHoldings holdings={holdings} />
         {/* <FundManagement /> */}
       </div>
-
-      {/* Activity Feed and Trends */}
       <div className="grid grid-cols-1 gap-4">
         {/* <MemeCombinations
           combinations={memeCombinations}
@@ -265,8 +256,6 @@ export default function TokenDashboard() {
         <TrendList trends={tokenTrends} onAnalyze={analyzeToken} />
         {analysis && <TrendAnalysis analysis={analysis} />}
       </div>
-
-      {/* Status and Error Alerts */}
       {status && (
         <Alert className="mt-4">
           <AlertDescription>{status}</AlertDescription>
