@@ -4,7 +4,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'https://degents.vercel.app/:path*',
+        destination: 'https://degents.onrender.com/api/:path*',
       },
     ];
   },
