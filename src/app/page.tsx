@@ -6,7 +6,11 @@ import { FundManagement } from '@/components/agent/FundManagement';
 import { AgentControls } from '@/components/agent/AgentControls';
 import { TrendList } from '@/components/trends/TrendList';
 import { TrendAnalysis } from '@/components/trends/TrendAnalysis';
+import { WalletInfo } from '@/components/agent/WalletInfo';
+import { TokenHoldings } from '@/components/agent/TokenHoldings';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { MemeCombinations } from '@/components/trends/MemeCombinations';
+import { GeneratedTokens } from '@/components/trends/GeneratedTokens';
 
 interface TokenTrend {
   symbol: string;
@@ -29,18 +33,33 @@ interface WalletInfo {
   network: string;
 }
 
+interface TokenHolding {
+  symbol: string;
+  balance: string;
+  token_address: string;
+  last_updated: string;
+}
+
 export default function TokenDashboard() {
   // State management
   const [tokenTrends, setTokenTrends] = useState<TokenTrend[]>([]);
-  const [walletInfo, setWalletInfo] = useState<WalletInfo | null>(
-    null
-  );
-  const [holdings, setHoldings] = useState([]);
+  const [walletInfo, setWalletInfo] = useState<WalletInfo>({
+    address: 'Loading...',
+    balance: '0',
+    network: 'Loading...',
+  });
+  const [holdings, setHoldings] = useState<TokenHolding[]>([]);
   const [isAgentRunning, setIsAgentRunning] = useState(false);
   const [autoTrading, setAutoTrading] = useState(false);
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [memeCombinations, setMemeCombinations] = useState<
+    MemeCombination[]
+  >([]);
+  const [generatedTokens, setGeneratedTokens] = useState<
+    GeneratedToken[]
+  >([]);
 
   // Fetch functions
   const fetchTokenTrends = async () => {
@@ -53,7 +72,10 @@ export default function TokenDashboard() {
         throw new Error('Failed to fetch trends.');
       }
     } catch (err) {
-      setError('Error fetching trends: ' + err.message);
+      setError(
+        'Error fetching trends: ' +
+          (err instanceof Error ? err.message : String(err))
+      );
     }
   };
 
@@ -64,6 +86,7 @@ export default function TokenDashboard() {
       setWalletInfo(data);
     } catch (err) {
       setError('Error fetching wallet info');
+      console.error('Wallet fetch error:', err);
     }
   };
 
@@ -71,9 +94,32 @@ export default function TokenDashboard() {
     try {
       const response = await fetch('/api/holdings');
       const data = await response.json();
-      setHoldings(data.holdings);
+      setHoldings(data.holdings || []);
     } catch (err) {
       setError('Error fetching holdings');
+      console.error('Holdings fetch error:', err);
+    }
+  };
+
+  const fetchMemeCombinations = async () => {
+    try {
+      const response = await fetch('/api/meme-combinations');
+      const data = await response.json();
+      if (data.success) {
+        setMemeCombinations(data.combinations);
+      }
+    } catch (err) {
+      setError('Error fetching meme combinations');
+    }
+  };
+
+  const fetchGeneratedTokens = async () => {
+    try {
+      const response = await fetch('/api/generated-tokens');
+      const data = await response.json();
+      setGeneratedTokens(data.tokens || []);
+    } catch (err) {
+      setError('Error fetching generated tokens');
     }
   };
 
@@ -90,6 +136,7 @@ export default function TokenDashboard() {
       setStatus(`Analysis complete for ${token.symbol}`);
     } catch (err) {
       setError('Error analyzing token');
+      console.error('Analysis error:', err);
     }
   };
 
@@ -105,6 +152,7 @@ export default function TokenDashboard() {
       setStatus(`Auto Trading ${checked ? 'enabled' : 'disabled'}`);
     } catch (err) {
       setError('Failed to toggle auto trading');
+      console.error('Auto trading toggle error:', err);
     }
   };
 
@@ -121,44 +169,53 @@ export default function TokenDashboard() {
       setError(
         `Failed to ${isAgentRunning ? 'stop' : 'start'} agent`
       );
+      console.error('Agent toggle error:', err);
+    }
+  };
+
+  const createMemeToken = async (combination: MemeCombination) => {
+    try {
+      setStatus(`Creating token ${combination.symbol}...`);
+      const response = await fetch('/api/create-meme-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(combination),
+      });
+      const data = await response.json();
+      setStatus(`Successfully created token ${combination.symbol}!`);
+    } catch (err) {
+      setError('Error creating meme token');
     }
   };
 
   // Initial load and polling
   useEffect(() => {
-    fetchTokenTrends();
-    fetchWalletInfo();
-    fetchHoldings();
+    const fetchData = async () => {
+      await Promise.all([
+        fetchTokenTrends(),
+        fetchWalletInfo(),
+        fetchHoldings(),
+        fetchGeneratedTokens(),
+      ]);
+    };
 
-    // Set up polling for updates
-    const interval = setInterval(() => {
-      fetchTokenTrends();
-      fetchWalletInfo();
-      fetchHoldings();
-    }, 30000); // Update every 30 seconds
-
+    fetchData();
+    const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  // WebSocket connection
+  // WebSocket connection for real-time updates
   useEffect(() => {
     const ws = new WebSocket('ws://localhost:8000/ws');
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      if (data.type === 'token_update') {
-        setTokenTrends((prevTrends) => {
-          const updatedTrends = [...prevTrends];
-          const index = updatedTrends.findIndex(
-            (t) => t.symbol === data.token.symbol
-          );
-          if (index !== -1) {
-            updatedTrends[index] = data.token;
-          } else {
-            updatedTrends.push(data.token);
-          }
-          return updatedTrends;
-        });
+      if (data.type === 'agent_activity') {
+        // Handle agent activity updates
+        setStatus(data.data.message);
+        // Refresh data if needed
+        fetchWalletInfo();
+        fetchHoldings();
       }
     };
 
@@ -168,20 +225,41 @@ export default function TokenDashboard() {
   return (
     <main className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">
-        Token Trend Dashboard
+        Degents Dashboard - AI Agents for Degens
       </h1>
 
+      {/* First Row: Wallet Info and Agent Controls */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <WalletInfo
+          address={walletInfo.address}
+          balance={walletInfo.balance}
+          network={walletInfo.network}
+        />
         <AgentControls
           isRunning={isAgentRunning}
           autoTrading={autoTrading}
           onToggleAgent={toggleAgent}
           onToggleAutoTrading={toggleAutoTrading}
         />
+      </div>
+
+      {/* Second Row: Token Holdings and Fund Management */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <TokenHoldings holdings={holdings} />
         <FundManagement />
       </div>
 
+      {/* Activity Feed and Trends */}
       <div className="grid grid-cols-1 gap-4">
+        {/* <MemeCombinations
+          combinations={memeCombinations}
+          onCreateToken={createMemeToken}
+        /> */}
+        <GeneratedTokens
+          tokens={generatedTokens}
+          onCreateToken={createMemeToken}
+          isAutoTrading={autoTrading}
+        />
         <ActivityFeed />
         <TrendList trends={tokenTrends} onAnalyze={analyzeToken} />
         {analysis && <TrendAnalysis analysis={analysis} />}

@@ -15,3 +15,18 @@ export interface AgentState {
   active_tokens: TokenTrend[];
   last_update: string;
 }
+
+export interface GeneratedToken {
+  name: string;
+  symbol: string;
+  description: string;
+  initial_supply: number;
+  max_supply: number;
+  source_trends: {
+    symbol: string;
+    score: number;
+  }[];
+  created?: boolean;
+  transaction_hash?: string;
+  network: string;
+}

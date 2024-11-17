@@ -1,0 +1,28 @@
+Metadata-Version: 2.1
+Name: cdp-agentkit-core
+Version: 0.0.5
+Summary: CDP Agentkit core primitives
+License: Apache-2.0
+Keywords: coinbase,sdk,crypto,cdp,agentkit,ai,agent
+Author: John Peterson
+Author-email: john.peterson@coinbase.com
+Requires-Python: >=3.10,<4.0
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Requires-Dist: cdp-sdk (>=0.10.3,<0.11.0)
+Requires-Dist: pydantic (>=2.0,<3.0)
+Requires-Dist: web3 (==7.2.0)
+Description-Content-Type: text/markdown
+
+# Agentkit Core
+Framework agnostic primitives that are meant to be composable and used via Agentkit framework extensions.
+
+You can find all of the supported actions under `./cdp_agentkit_core/actions`
+
+## Contributing
+See [CONTRIBUTING.md](../CONTRIBUTING.md) for more information.
+
