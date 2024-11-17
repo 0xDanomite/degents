@@ -497,8 +497,8 @@ class AgentService:
         """Create a new meme token using WOW.xyz"""
         try:
             # Get the wow_create_token tool
-            wow_tool = next((t for t in self.toolkit.get_tools()
-                          if t.name == "wow_create_token"), None)
+            tools = self.toolkit.get_tools()
+            wow_tool = next((t for t in tools if t.name == "wow_create_token"), None)
 
             if not wow_tool:
                 raise Exception("WOW token creation tool not found")
@@ -508,21 +508,33 @@ class AgentService:
                 f"Creating meme token {token_params['symbol']}..."
             )
 
-            # Create the token - use run instead of arun
-            result = await wow_tool.run({
-                "name": token_params["name"],
-                "symbol": token_params["symbol"],
-                "description": token_params["description"],
-                "initial_supply": str(token_params["initial_supply"]),
-                "max_supply": str(token_params["max_supply"])
-            })
+            # Create the token using the tool directly
+            try:
+                # Convert supplies to strings
+                creation_params = {
+                    "name": token_params["name"],
+                    "symbol": token_params["symbol"],
+                    "description": token_params["description"],
+                    "initial_supply": str(token_params["initial_supply"]),
+                    "max_supply": str(token_params["max_supply"])
+                }
 
-            # Parse the result if it's a string
-            if isinstance(result, str):
-                try:
-                    result = json.loads(result)
-                except json.JSONDecodeError:
-                    result = {"transaction_hash": None, "message": result}
+                print("Creating token with params:", creation_params)  # Debug print
+
+                # Use the tool synchronously
+                result = wow_tool(creation_params)
+                print("Creation result:", result)  # Debug print
+
+                # Parse the result if it's a string
+                if isinstance(result, str):
+                    try:
+                        result = json.loads(result)
+                    except json.JSONDecodeError:
+                        result = {"transaction_hash": None, "message": result}
+
+            except Exception as tool_error:
+                print(f"Tool execution error: {str(tool_error)}")  # Debug print
+                raise tool_error
 
             # Get network details
             network = os.getenv('NETWORK_ID', 'base-sepolia')
